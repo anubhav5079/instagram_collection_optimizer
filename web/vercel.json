@@ -1,12 +1,5 @@
 {
   "buildCommand": "npm run setup-db && npm run build",
   "outputDirectory": "out",
-  "framework": "nextjs",
-  "env": [
-    "INSTAGRAM_SESSION_ID",
-    "INSTAGRAM_USERNAME",
-    "OLLAMA_HOST",
-    "OLLAMA_MODEL",
-    "WHISPER_MODEL"
-  ]
+  "framework": "nextjs"
 }
