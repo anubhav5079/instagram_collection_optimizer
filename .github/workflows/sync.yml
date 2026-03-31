@@ -1,0 +1,59 @@
+name: Sync Instagram Saves
+
+on:
+  schedule:
+    # Run every Monday and Thursday at 6 AM UTC
+    - cron: '0 6 * * 1,4'
+  workflow_dispatch: {} # Manual trigger from GitHub UI
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install system dependencies
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg
+
+      - name: Install Python dependencies
+        run: pip install -r agent/requirements.txt
+
+      - name: Run scraper
+        env:
+          INSTAGRAM_SESSION_ID: ${{ secrets.INSTAGRAM_SESSION_ID }}
+          INSTAGRAM_USERNAME: ${{ secrets.INSTAGRAM_USERNAME }}
+        run: python agent/main.py scrape
+
+      # Note: Enrichment requires Ollama (local only).
+      # To enrich in CI, run locally first then push.
+
+      - name: Show stats
+        run: python agent/main.py stats
+
+      - name: Commit new data
+        run: |
+          git config user.name "Instagram Sync Bot"
+          git config user.email "bot@users.noreply.github.com"
+          git add web/public/media/ web/data/instagram.db
+          # Only commit if there are changes
+          git diff --cached --quiet || git commit -m "sync: update saved collections [$(date -u +%Y-%m-%dT%H:%M:%SZ)]"
+          git push
+
+      - name: Trigger Vercel deploy
+        if: env.VERCEL_DEPLOY_HOOK != ''
+        env:
+          VERCEL_DEPLOY_HOOK: ${{ secrets.VERCEL_DEPLOY_HOOK }}
+        run: |
+          curl -X POST "$VERCEL_DEPLOY_HOOK" \
+            -H "Content-Type: application/json" \
+            --fail --silent --show-error
+          echo "Deploy triggered successfully"

@@ -1,0 +1,28 @@
+# Environment
+.env
+
+# Python
+agent/__pycache__/
+agent/**/__pycache__/
+*.pyc
+agent/logs/
+agent/temp/
+venv/
+*.egg-info/
+
+# Node
+node_modules/
+.next/
+out/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Keep the database and media files (they're part of the static site)
+!web/data/instagram.db
+!web/public/media/
