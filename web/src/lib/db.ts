@@ -15,13 +15,21 @@ const DB_PATH = path.join(process.cwd(), 'data', 'instagram.db');
 /**
  * Get a read-only database connection.
  * Returns null if the database file doesn't exist (first build before scraping).
+ * Also returns null if better-sqlite3 bindings aren't available (preview environment).
  */
 function getDb(): Database.Database | null {
-  if (!fs.existsSync(DB_PATH)) {
-    console.warn(`Database not found at ${DB_PATH} — using demo data`);
+  try {
+    if (!fs.existsSync(DB_PATH)) {
+      console.warn(`Database not found at ${DB_PATH} — using demo data`);
+      return null;
+    }
+    return new Database(DB_PATH, { readonly: true });
+  } catch (err) {
+    // better-sqlite3 bindings not available (common in preview/serverless environments)
+    // Fall back to demo data
+    console.warn(`Database unavailable: ${err instanceof Error ? err.message : 'unknown error'} — using demo data`);
     return null;
   }
-  return new Database(DB_PATH, { readonly: true });
 }
 
 /**
